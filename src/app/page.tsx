@@ -1,18 +1,3 @@
-import { NextApiRequest, NextApiResponse } from "next";
-import getCourses from './api/courses/route';
-
-// const fetchData = async () => {
-//   await fetch('http://localhost:3000/api/get-courses', {
-//           method: 'GET',})
-//       .then(res => {
-//           if (res.ok) {
-//               console.log("Successfully connected to database!");
-//           } else {
-//               console.log("Could not connect to database!");
-//           }
-//       });
-// };
-// getCourses();
 
 export default function Home() {
   return (
