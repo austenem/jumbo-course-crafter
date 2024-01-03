@@ -5,9 +5,9 @@ import clientPromise from "./lib/mongodb";
 const updateDB = async () => {
   try {
       const client = await clientPromise;
-      // acesses database JumboCourseCrafter
+
+      // access db collection
       const db = client.db("JumboCourseCrafter");
-      // acesses collection CourseInfo
       const collect = db.collection("CourseInfo");
 
       // Get course info from scrapeSIS
