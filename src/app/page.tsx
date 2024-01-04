@@ -1,8 +1,8 @@
+'use client'
+import DisplaySchedules from './components/DisplaySchedules'
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      Hey there! This is a Next.js + Tailwind CSS template.
-    </main>
+    <DisplaySchedules/>
   )
 }

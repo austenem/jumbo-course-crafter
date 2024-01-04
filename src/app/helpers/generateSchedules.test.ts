@@ -4,21 +4,21 @@ import {
   generateSchedules,
   areSchedulesIdentical,
 } from './generateSchedules';
-import * as dataJson from './data.json';
+import * as dataJson from '@/backend/data.json';
 
-import Cart from './types/Cart';
-import Course from './types/Course';
-import Schedule from './types/Schedule';
-import Section from './types/Section';
-import Status from './types/Status';
-import Weekday from './types/Weekday';
-import TimeSlot from './types/TimeSlot';
+import Cart from '@/backend/types/Cart';
+import Course from '@/backend/types/Course';
+import Schedule from '@/backend/types/Schedule';
+import Section from '@/backend/types/Section';
+import Status from '@/backend/types/Status';
+import Weekday from '@/backend/types/Weekday';
+import TimeSlot from '@/backend/types/TimeSlot';
 
 /****************************************************************************************
                                       TESTING                                           
 ****************************************************************************************/
 
-async function assert(message, conditionTest) {
+async function assert(message: string, conditionTest: any) {
   const [recieved, expected] = await conditionTest();
   if (recieved !== expected) {
       console.log(`ERROR: ${message}` || "Assertion failed");

@@ -3,7 +3,6 @@ import { NextResponse, NextRequest } from 'next/server';
 // Import clientPromise
 import clientPromise from '@/backend/lib/mongodb';
 
-
 export async function GET (req: NextRequest) {
   try {
     // get classNo from URL

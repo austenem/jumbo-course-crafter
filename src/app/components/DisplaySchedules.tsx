@@ -4,9 +4,17 @@
  */
 
 // Import React
+import React, { useReducer, useEffect } from 'react';
+
+// Import types
 import Cart from '@/backend/types/Cart';
 import Schedule from '@/backend/types/Schedule';
-import React, { useReducer, useEffect } from 'react';
+
+// Import helpers
+import { generateSchedules } from '../helpers/generateSchedules';
+
+// Import components
+import { ThreeDots } from 'react-loader-spinner'
 
 /*------------------------------------------------------------------------*/
 /* -------------------------------- Types ------------------------------- */
@@ -134,20 +142,20 @@ const reducer = (state: State, action: Action): State => {
 /* --------------------------- Static Helpers --------------------------- */
 /*------------------------------------------------------------------------*/
 
-/**
- * Add description of helper
- * @author Austen Money
- * @param addArgName add arg description
- * @param addArgName add arg description
- * @returns add return description
- */
-const addHelperName = (
-  addRequiredArgName: addRequiredArgType,
-  addOptionalArgName?: addOptionalArgType,
-  addOptionalArgWithDefaultName?: addOptionalArgType = addArgDefault,
-): addReturnType => {
-  // TODO: implement
-};
+// /**
+//  * Add description of helper
+//  * @author Austen Money
+//  * @param addArgName add arg description
+//  * @param addArgName add arg description
+//  * @returns add return description
+//  */
+// const addHelperName = (
+//   addRequiredArgName: addRequiredArgType,
+//   addOptionalArgName?: addOptionalArgType,
+//   addOptionalArgWithDefaultName?: addOptionalArgType = addArgDefault,
+// ): addReturnType => {
+//   // TODO: implement
+// };
 
 /*------------------------------------------------------------------------*/
 /* ------------------------------ Component ----------------------------- */
@@ -187,19 +195,19 @@ const DisplaySchedules: React.FC<{}> = () => {
   /* ------------------------- Component Functions ------------------------ */
   /*------------------------------------------------------------------------*/
 
-  /**
-   * Add component helper function description
-   * @author Austen Money
-   * @param addArgName add description of argument
-   * @param [addOptionalArgName] add description of optional argument
-   * @returns add description of return
-   */
-  const addComponentHelperFunctionName = (
-    addArgName: addArgType,
-    addOptionalArgName?: addOptionalArgType,
-  ): addReturnType => {
-    // TODO: implement
-  };
+  // /**
+  //  * Add component helper function description
+  //  * @author Austen Money
+  //  * @param addArgName add description of argument
+  //  * @param [addOptionalArgName] add description of optional argument
+  //  * @returns add description of return
+  //  */
+  // const addComponentHelperFunctionName = (
+  //   addArgName: addArgType,
+  //   addOptionalArgName?: addOptionalArgType,
+  // ): addReturnType => {
+  //   // TODO: implement
+  // };
 
   /*------------------------------------------------------------------------*/
   /* ------------------------------- Render ------------------------------- */
@@ -214,44 +222,16 @@ const DisplaySchedules: React.FC<{}> = () => {
 
   /* ------- AddFirstTypeOfModal ------ */
 
-  if (addLogicToDetermineIfModalIsVisible) {
-    // TODO: implement
-
+  if (showLoadingSpinner) {
     // Create modal
     modal = (
-      <Modal
+      <ThreeDots
         key="unique-modal-key"
-        ...
+        height="80"
+        width="80"
+        color="purple"
+        ariaLabel="three-dots-loading"
       />
-    );
-  }
-
-  /*----------------------------------------*/
-  /* ---------------- Views --------------- */
-  /*----------------------------------------*/
-
-  // Body that will be filled with the current view
-  let body: React.ReactNode;
-
-  /* -------- AddFirstViewName -------- */
-
-  if (view === View.AddViewName) {
-    // TODO: implement
-
-    // Create body
-    body = (
-      <addJSXOfBody />
-    );
-  }
-
-  /* -------- AddSecondViewName -------- */
-
-  if (view === View.AddViewName) {
-    // TODO: implement
-
-    // Create body
-    body = (
-      <addJSXOfBody />
     );
   }
 
@@ -260,13 +240,51 @@ const DisplaySchedules: React.FC<{}> = () => {
   /*----------------------------------------*/
 
   return (
-    <addContainersForBody>
+    <div className="bg-white h-screen">
       {/* Add Modal */}
       {modal}
 
       {/* Add Body */}
-      {body}
-    </addContainersForBody>
+      <form className="w-full h-full px-4 py-4">
+        <div className="flex flex-wrap -mx-3 mb-2">
+          <div className="w-1/3 px-3 mb-6 md:mb-0">
+            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-city">
+              Min # of credits
+            </label>
+            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-city" type="text" placeholder="12"/>
+          </div>
+          <div className="w-1/3 px-3 mb-6 md:mb-0">
+            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-zip">
+              Max # of credits
+            </label>
+            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-zip" type="text" placeholder="18"/>
+          </div>
+        </div>
+        <div className="flex flex-wrap -mx-3 mb-6">
+          <div className="w-1/3 px-3">
+            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-last-name">
+              Required
+            </label>
+            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-last-name" type="text" placeholder="23608"/>
+          </div>
+          <div className="w-1/3 px-3">
+            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-last-name">
+              Choose Any
+            </label>
+            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-last-name" type="text" placeholder="23608"/>
+          </div>
+          <div className="w-1/3 px-3">
+            <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-last-name">
+              Choose One
+            </label>
+            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-last-name" type="text" placeholder="23608"/>
+          </div>
+        </div>
+        <button className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded">
+          Generate
+        </button>
+      </form>
+    </div>
   );
 };
 

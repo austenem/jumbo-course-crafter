@@ -1,8 +1,8 @@
-import Cart from './types/Cart';
-import Course from './types/Course';
-import Schedule from './types/Schedule';
-import Section from './types/Section';
-import SectionGroup from './types/SectionGroup';
+import Cart from '@/backend/types/Cart';
+import Course from '@/backend/types/Course';
+import Schedule from '@/backend/types/Schedule';
+import Section from '@/backend/types/Section';
+import SectionGroup from '@/backend/types/SectionGroup';
 
 /* CONSTANTS */
 const EMPTY_SCHEDULE: Schedule = {
@@ -42,6 +42,11 @@ const addSectionToSchedule = (section: Section | undefined, schedule: Schedule):
     let includedDay = updatedSchedule.weekTimes.find((time) => {
       return time.day === day;
     })
+
+    // if section doesn't include time, return schedule
+    if (!sectionToAdd.time) {
+      return updatedSchedule;
+    }
     
     includedDay
       ? includedDay.times.push(sectionToAdd.time)
@@ -103,15 +108,16 @@ const doesSectionConflict = (section: Section | undefined, schedule: Schedule): 
     // if weekday is included, check whether times conflict
     if (includedDay) {
       includedDay.times.forEach((time) => {
-        if (((section.time.end <= time.end) && (section.time.end >= time.start))
-          || ((section.time.start <= time.end) && (section.time.start >= time.start))
-          || ((time.end <= section.time.end) && (time.end >= section.time.start))
-          || ((time.start <= section.time.end) && (time.start >= section.time.start))) {
-            isThereConflict = true
-          }
-      })
-    }
-  })
+        if (section.time) {
+          if (((section.time.end <= time.end) && (section.time.end >= time.start))
+            || ((section.time.start <= time.end) && (section.time.start >= time.start))
+            || ((time.end <= section.time.end) && (time.end >= section.time.start))
+            || ((time.start <= section.time.end) && (time.start >= section.time.start))) {
+              isThereConflict = true
+            }}
+         })
+      }
+    })
 
   return isThereConflict;
 }
@@ -170,7 +176,9 @@ const getCourseCreditTotal = (course: Course): number => {
   let creditTotal = 0;
 
   sectionGroups.forEach((section) => {
-    creditTotal += section.allSections[0].credits;
+    if (section.allSections) {
+      creditTotal += section.allSections[0].credits;
+    }
   })
 
   return creditTotal;
@@ -187,7 +195,9 @@ const getDomainSize = (course: Course): number => {
 
   let domainSize = 0;
   courseGroups.forEach((group: SectionGroup) => {
-    domainSize += group.allSections.length;
+    if (group.allSections) {
+      domainSize += group.allSections.length;
+    }
   });
 
   return domainSize;
@@ -296,7 +306,12 @@ const backtrackRequired = (
 
   for (let i = 0; i < currGroups.length; i++) {
     const currGroup = currGroups[i];
-    const currAllSections = shuffleArray(currGroups[i].allSections);
+    const currGroupAllSections = currGroups[i].allSections;
+    const currAllSections = (
+      currGroupAllSections
+        ? shuffleArray(currGroupAllSections)
+        : []
+    );
     for (let p = 0; p < currAllSections.length; p++) {
       // const randomIdx = Math.floor(Math.random() * currAllSections.length);
       const currSection = currAllSections[p];
