@@ -15,14 +15,23 @@ import { generateSchedules } from '../helpers/generateSchedules';
 
 // Import components
 import { ThreeDots } from 'react-loader-spinner'
+import Course from '@/backend/types/Course';
 
 /*------------------------------------------------------------------------*/
 /* -------------------------------- Types ------------------------------- */
 /*------------------------------------------------------------------------*/
 
-type ChooseOnePair = {
-  classOne: string,
-  classTwo: string,
+type FormInfoType = {
+    // Given required course nums
+    requiredCourseNums: string,
+    // Given chooseAny course nums
+    chooseAnyCourseNums: string,
+    // Given chooseOne course nums
+    chooseOneCourseNums: string,
+    // Given min number of credits
+    minCredits: number,
+    // Given max number of credits
+    maxCredits: number,
 };
 
 /*------------------------------------------------------------------------*/
@@ -32,16 +41,8 @@ type ChooseOnePair = {
 /* -------- State Definition -------- */
 
 type State = {
-  // Given required course nums
-  requiredCourseNums: string[],
-  // Given chooseAny course nums
-  chooseAnyCourseNums: string[],
-  // Given chooseOne course nums
-  chooseOneCourseNums: ChooseOnePair[],
-  // Given min number of credits
-  minCredits: number,
-  // Given max number of credits
-  maxCredits: number,
+  // Given info from form
+  formInfo: FormInfoType,
   // Schedules generated from cart
   schedules?: Schedule[],
   // Whether to show the loading spinner
@@ -52,10 +53,8 @@ type State = {
 
 // Types of actions
 enum ActionType {
-  // Change set of course nums
-  UpdateCourseNums = 'UpdateCourseNums',
-  // Change the number of credits
-  UpdateCredits = 'UpdateCredits',
+  // Update form info
+  UpdateFormInfo = 'UpdateFormInfo',
   // Generate the schedules
   GenerateSchedules = 'GenerateSchedules',
   // Toggle whether to show the loading spinner
@@ -66,26 +65,11 @@ enum ActionType {
 type Action = (
   | {
     // Action type
-    type: ActionType.UpdateCourseNums,
-    // Which course nums to update
-    courseNumsToUpdate: (
-      | 'requiredCourseNums'
-      | 'chooseAnyCourseNums'
-      | 'chooseOneCourseNums'
-    ),
-    // New course nums
-    newCourseNums: string[] | ChooseOnePair[],
-  }
-  | {
-    // Action type
-    type: ActionType.UpdateCredits,
-    // Which credits to update
-    creditsToUpdate: (
-      | 'minCredits'
-      | 'maxCredits'
-    ),
-    // New credits
-    newCredits: number,
+    type: ActionType.UpdateFormInfo,
+    // Which form info to update
+    formInfoToUpdate: keyof FormInfoType,
+    // New form info
+    newFormInfo: string | number,
   }
   | {
     // Action type
@@ -108,16 +92,13 @@ type Action = (
  */
 const reducer = (state: State, action: Action): State => {
   switch (action.type) {
-    case ActionType.UpdateCourseNums: {
+    case ActionType.UpdateFormInfo: {
       return {
         ...state,
-        [action.courseNumsToUpdate]: action.newCourseNums,
-      };
-    }
-    case ActionType.UpdateCredits: {
-      return {
-        ...state,
-        [action.creditsToUpdate]: action.newCredits,
+        formInfo: {
+          ...state.formInfo,
+          [action.formInfoToUpdate]: action.newFormInfo,
+        },
       };
     }
     case ActionType.GenerateSchedules: {
@@ -170,11 +151,13 @@ const DisplaySchedules: React.FC<{}> = () => {
 
   // Initial state
   const initialState: State = {
-    requiredCourseNums: [],
-    chooseAnyCourseNums: [],
-    chooseOneCourseNums: [],
-    minCredits: 0,
-    maxCredits: 0,
+    formInfo: {
+      requiredCourseNums: '',
+      chooseAnyCourseNums: '',
+      chooseOneCourseNums: '',
+      minCredits: 12,
+      maxCredits: 18,
+    },
   };
 
   // Initialize state
@@ -182,11 +165,13 @@ const DisplaySchedules: React.FC<{}> = () => {
 
   // Destructure common state
   const {
-    requiredCourseNums,
-    chooseAnyCourseNums,
-    chooseOneCourseNums,
-    minCredits,
-    maxCredits,
+    formInfo: {
+      requiredCourseNums,
+      chooseAnyCourseNums,
+      chooseOneCourseNums,
+      minCredits,
+      maxCredits,
+    },
     schedules,
     showLoadingSpinner,
   } = state;
@@ -195,19 +180,73 @@ const DisplaySchedules: React.FC<{}> = () => {
   /* ------------------------- Component Functions ------------------------ */
   /*------------------------------------------------------------------------*/
 
-  // /**
-  //  * Add component helper function description
-  //  * @author Austen Money
-  //  * @param addArgName add description of argument
-  //  * @param [addOptionalArgName] add description of optional argument
-  //  * @returns add description of return
-  //  */
-  // const addComponentHelperFunctionName = (
-  //   addArgName: addArgType,
-  //   addOptionalArgName?: addOptionalArgType,
-  // ): addReturnType => {
-  //   // TODO: implement
-  // };
+  /**
+   * Handle submission of form
+   * @author Austen Money
+   */
+  const handleGeneration = async (e: any) => {
+    e.preventDefault();
+    console.log('Generating schedules...');
+    // Toggle loading spinner
+    // dispatch({
+    //   type: ActionType.ToggleLoadingSpinner,
+    // });
+
+    // Get courses from database
+
+    // console.log('woah')
+    // const response = await fetch(`/api/courses/num?classNo=23608`, {
+    //   method: "GET",
+    // });
+    // console.log('RESPONSE HERE:', response.body);
+    // console.log('RESPONSE HERE:', (await response.json()));
+
+    const required = await Promise.all(requiredCourseNums.split(', ').map(async (courseNum) => {
+      console.log(`Here it is: ${courseNum}`);
+      const response = await fetch(`/api/courses/num?classNo=${courseNum}`, {
+        method: "GET",
+      });
+      const responseJson = await response.json();
+      console.log('RESPONSE HERE:', responseJson);
+      return responseJson;
+    }));
+
+    console.log('required: ', required);
+
+    const chooseAny = await Promise.all(chooseAnyCourseNums.split(', ').map(async (courseNum) => {
+      console.log(`Here it is: ${courseNum}`);
+      const response = await fetch(`/api/courses/num?classNo=${courseNum}`, {
+        method: "GET",
+      });
+      const responseJson = await response.json();
+      console.log('RESPONSE HERE:', responseJson);
+      return responseJson;
+    }));
+
+    // Generate schedules
+    const newSchedules = generateSchedules({
+      required,
+      chooseAny,
+      chooseOne: [],
+      creditReqs: {
+        min: minCredits,
+        max: maxCredits,
+      },
+    });
+
+    console.log('newSchedules: ', newSchedules);
+
+    // // Update schedules
+    // dispatch({
+    //   type: ActionType.GenerateSchedules,
+    //   newSchedules,
+    // });
+
+    // // Toggle loading spinner
+    // dispatch({
+    //   type: ActionType.ToggleLoadingSpinner,
+    // });
+  };
 
   /*------------------------------------------------------------------------*/
   /* ------------------------------- Render ------------------------------- */
@@ -238,26 +277,51 @@ const DisplaySchedules: React.FC<{}> = () => {
   /*----------------------------------------*/
   /* --------------- Main UI -------------- */
   /*----------------------------------------*/
-
+  console.log(minCredits)
+  console.log(maxCredits)
+  console.log(requiredCourseNums)
+  console.log(chooseAnyCourseNums)
+  console.log(chooseOneCourseNums)
   return (
     <div className="bg-white h-screen">
       {/* Add Modal */}
       {modal}
 
       {/* Add Body */}
-      <form className="w-full h-full px-4 py-4">
+      <form 
+        className="w-full h-full px-4 py-4"
+        onSubmit={handleGeneration}
+      >
         <div className="flex flex-wrap -mx-3 mb-2">
           <div className="w-1/3 px-3 mb-6 md:mb-0">
             <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-city">
               Min # of credits
             </label>
-            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-city" type="text" placeholder="12"/>
+            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" 
+                   type="number"
+                   placeholder="12"
+                   value={String(minCredits)}
+                   onChange={(evt) => dispatch({
+                    type: ActionType.UpdateFormInfo,
+                    formInfoToUpdate: 'minCredits',
+                    newFormInfo: evt.target.valueAsNumber,
+                   })}
+            />
           </div>
           <div className="w-1/3 px-3 mb-6 md:mb-0">
             <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-zip">
               Max # of credits
             </label>
-            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-zip" type="text" placeholder="18"/>
+            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" 
+                   type="number"
+                   placeholder="12"
+                   value={String(maxCredits)}
+                   onChange={(evt) => dispatch({
+                    type: ActionType.UpdateFormInfo,
+                    formInfoToUpdate: 'maxCredits',
+                    newFormInfo: evt.target.valueAsNumber,
+                   })}
+            />
           </div>
         </div>
         <div className="flex flex-wrap -mx-3 mb-6">
@@ -265,22 +329,52 @@ const DisplaySchedules: React.FC<{}> = () => {
             <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-last-name">
               Required
             </label>
-            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-last-name" type="text" placeholder="23608"/>
+            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                   type="text"
+                   placeholder="23608, 23608"
+                   value={requiredCourseNums}
+                   onChange={(evt) => dispatch({
+                    type: ActionType.UpdateFormInfo,
+                    formInfoToUpdate: 'requiredCourseNums',
+                    newFormInfo: evt.target.value,
+                   })}
+            />
           </div>
           <div className="w-1/3 px-3">
             <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-last-name">
               Choose Any
             </label>
-            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-last-name" type="text" placeholder="23608"/>
+            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                   type="text"
+                   placeholder="23608, 23608"
+                   value={chooseAnyCourseNums}
+                   onChange={(evt) => dispatch({
+                    type: ActionType.UpdateFormInfo,
+                    formInfoToUpdate: 'chooseAnyCourseNums',
+                    newFormInfo: evt.target.value,
+                   })}
+            />
           </div>
           <div className="w-1/3 px-3">
             <label className="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" htmlFor="grid-last-name">
               Choose One
             </label>
-            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" id="grid-last-name" type="text" placeholder="23608"/>
+            <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                   type="text"
+                   placeholder="23608, 23608"
+                   value={chooseOneCourseNums}
+                   onChange={(evt) => dispatch({
+                    type: ActionType.UpdateFormInfo,
+                    formInfoToUpdate: 'chooseOneCourseNums',
+                    newFormInfo: evt.target.value,
+                   })}
+            />
           </div>
         </div>
-        <button className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded">
+        <button
+          className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 border border-blue-700 rounded"
+          type="submit"
+        >
           Generate
         </button>
       </form>
