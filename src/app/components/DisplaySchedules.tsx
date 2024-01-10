@@ -7,7 +7,6 @@
 import React, { useReducer } from 'react';
 
 // Import types
-import Cart from '@/backend/types/Cart';
 import Schedule from '@/backend/types/Schedule';
 import Course from '@/backend/types/Course';
 
@@ -18,8 +17,6 @@ import { generateSchedules } from '../helpers/generateSchedules';
 import { ThreeDots } from 'react-loader-spinner'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
-import Section from '@/backend/types/Section';
-import TimeSlot from '@/backend/types/TimeSlot';
 
 /*------------------------------------------------------------------------*/
 /* -------------------------------- Types ------------------------------- */
@@ -64,8 +61,11 @@ enum WeekDays {
 type State = {
   // Given info from form
   formInfo: FormInfoType,
-  // Schedules generated from cart
-  schedules?: Schedule[],
+  // Schedules to display
+  schedules?: {
+    creditTotal: number,
+    calendarEvents: CalendarDate[],
+  }[],
   // Whether to show the loading spinner
   showLoadingSpinner?: boolean,
 };
@@ -76,8 +76,8 @@ type State = {
 enum ActionType {
   // Update form info
   UpdateFormInfo = 'UpdateFormInfo',
-  // Generate the schedules
-  GenerateSchedules = 'GenerateSchedules',
+  // Generate the events
+  GenerateEvents = 'GenerateEvents',
   // Toggle whether to show the loading spinner
   ToggleLoadingSpinner = 'ToggleLoadingSpinner',
 }
@@ -94,9 +94,12 @@ type Action = (
   }
   | {
     // Action type
-    type: ActionType.GenerateSchedules,
-    // New Schedules
-    newSchedules: Schedule[],
+    type: ActionType.GenerateEvents,
+    // New schedules to display
+    newSchedules: {
+      creditTotal: number,
+      calendarEvents: CalendarDate[],
+    }[],
   }
   | {
     // Action type
@@ -122,7 +125,7 @@ const reducer = (state: State, action: Action): State => {
         },
       };
     }
-    case ActionType.GenerateSchedules: {
+    case ActionType.GenerateEvents: {
       return {
         ...state,
         schedules: action.newSchedules,
@@ -313,7 +316,7 @@ const DisplaySchedules: React.FC<{}> = () => {
 
 
     // Generate schedules
-    const newSchedules = generateSchedules({
+    const schedules = generateSchedules({
       required,
       chooseAny,
       chooseOne: [],
@@ -323,17 +326,30 @@ const DisplaySchedules: React.FC<{}> = () => {
       },
     });
 
-    console.log('newSchedules: ', newSchedules);
+    console.log('schedules: ', schedules);
+    const newSchedules: any[] = [];
 
-    // Update schedules
-    if (typeof newSchedules !== 'string') {
-      dispatch({
-        type: ActionType.GenerateSchedules,
-        newSchedules,
+    if (typeof schedules !== 'string') {
+      // Generate events
+      schedules.forEach((schedule) => {
+        let calendarEvents: CalendarDate[] = [];
+          schedule.courses.forEach((course) => {
+            calendarEvents = calendarEvents.concat(generateDates(course));
+          });
+          newSchedules.push({
+            creditTotal: schedule.creditTotal,
+            calendarEvents,
+          });
       });
     } else {
       console.log('Error generating schedules: ', newSchedules);
     }
+
+    // Update schedules
+    dispatch({
+      type: ActionType.GenerateEvents,
+      newSchedules,
+    });
 
     // Toggle loading spinner
     dispatch({
@@ -370,14 +386,6 @@ const DisplaySchedules: React.FC<{}> = () => {
   /*----------------------------------------*/
   /* --------------- Main UI -------------- */
   /*----------------------------------------*/
-
-  let calendarEvents: any[] = [];
-
-  if (schedules && schedules.length > 0) {
-    schedules[0].courses.forEach((course) => {
-      calendarEvents = calendarEvents.concat(generateDates(course));
-    });
-  };
 
   return (
     <div className="bg-white h-full">
@@ -474,9 +482,13 @@ const DisplaySchedules: React.FC<{}> = () => {
       {/* Add Modal */}
       {modal}
       {schedules
-        ? (<div className='w-full px-4'>
-            <b>Schedule 1: ({schedules[0].creditTotal} credits)</b>
+        ? schedules.map((schedule, i) => 
+        (<div 
+          key={schedule.calendarEvents[0].title}
+          className='w-full px-6'
+        >
             <br />
+            <b>Schedule {i + 1}: ({schedule.creditTotal} credits)</b>
             <FullCalendar
               views={{
                 default: {
@@ -493,13 +505,12 @@ const DisplaySchedules: React.FC<{}> = () => {
               allDaySlot={false}
               headerToolbar={false}
               plugins={[timeGridPlugin]}
-              events={calendarEvents}
+              events={schedule.calendarEvents}
               eventOverlap={false}
               displayEventTime={true}
               slotDuration="00:30:00"
             />
-          {/* </div> */}
-        </div>)
+        </div>))
         : null}
     </div>
   );
