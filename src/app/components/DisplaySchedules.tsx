@@ -4,7 +4,7 @@
  */
 
 // Import React
-import React, { useReducer, useEffect } from 'react';
+import React, { useReducer } from 'react';
 
 // Import types
 import Cart from '@/backend/types/Cart';
@@ -18,22 +18,41 @@ import { generateSchedules } from '../helpers/generateSchedules';
 import { ThreeDots } from 'react-loader-spinner'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
+import Section from '@/backend/types/Section';
+import TimeSlot from '@/backend/types/TimeSlot';
 
 /*------------------------------------------------------------------------*/
 /* -------------------------------- Types ------------------------------- */
 /*------------------------------------------------------------------------*/
 
 type FormInfoType = {
-    // Given required course nums
-    requiredCourseNums: string,
-    // Given chooseAny course nums
-    chooseAnyCourseNums: string,
-    // Given chooseOne course nums
-    chooseOneCourseNums: string,
-    // Given min number of credits
-    minCredits: number,
-    // Given max number of credits
-    maxCredits: number,
+  // Given required course nums
+  requiredCourseNums: string,
+  // Given chooseAny course nums
+  chooseAnyCourseNums: string,
+  // Given chooseOne course nums
+  chooseOneCourseNums: string,
+  // Given min number of credits
+  minCredits: number,
+  // Given max number of credits
+  maxCredits: number,
+};
+
+type CalendarDate = {
+  title: string,
+  description: string,
+  start: string,
+  end: string,
+};
+
+enum WeekDays {
+  'Sunday' = '2024-01-21',
+  'Monday' = '2024-01-22',
+  'Tuesday' = '2024-01-23',
+  'Wednesday' = '2024-01-24',
+  'Thursday' = '2024-01-25',
+  'Friday' = '2024-01-26',
+  'Saturday' = '2024-01-27',
 };
 
 /*------------------------------------------------------------------------*/
@@ -125,20 +144,75 @@ const reducer = (state: State, action: Action): State => {
 /* --------------------------- Static Helpers --------------------------- */
 /*------------------------------------------------------------------------*/
 
-// /**
-//  * Add description of helper
-//  * @author Austen Money
-//  * @param addArgName add arg description
-//  * @param addArgName add arg description
-//  * @returns add return description
-//  */
-// const addHelperName = (
-//   addRequiredArgName: addRequiredArgType,
-//   addOptionalArgName?: addOptionalArgType,
-//   addOptionalArgWithDefaultName?: addOptionalArgType = addArgDefault,
-// ): addReturnType => {
-//   // TODO: implement
-// };
+/**
+ * Generate date Id string from a time and day of the week
+ * @author Austen Money
+ * @param time time of day
+ * @param day day of the week
+ * @returns date string to use in calendar
+ */
+const stringifyDate = (time: number, day: keyof typeof WeekDays): string => {
+  // Ensure the input is a positive integer
+  const positiveInteger = Math.floor(Math.abs(time));
+
+  // Extract hours, minutes, and seconds
+  const hours = Math.floor(positiveInteger / 100);
+  const minutes = Math.floor(positiveInteger % 100);
+
+  console.log(`hours: ${hours}, minutes: ${minutes}`);
+
+  // Format the result with leading zeros
+  const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
+
+  // Generate date string
+  const date = `${WeekDays[day]}T${formattedTime}`;
+  return date;
+};
+
+/**
+ * Generate date Id string from a course section
+ * @author Austen Money
+ * @param section course section
+ * @returns date ID string to use in calendar
+ */
+const generateDates = (course: Course): CalendarDate[] => {
+  console.log('course title: ', course.title);
+  // destructuring course
+  const { 
+    title,
+    description,
+    mainGroup,
+    secondaryGroups,
+  } = course;
+
+  const dates: CalendarDate[] = [];
+
+  // Get main group
+  if (!mainGroup.selectedSection || !mainGroup.selectedSection.days || !mainGroup.selectedSection.time) {
+    console.log('uh oh')
+    return dates;
+  }
+
+  const {
+    days,
+    time,
+  } = mainGroup.selectedSection;
+
+  console.log('days: ', days);
+  days.forEach((day) => {
+    if (day === "Monday" || day === "Tuesday" || day === "Wednesday" || day === "Thursday" || day === "Friday" || day === "Saturday" || day === "Sunday") {
+      console.log('AAAAHHHHHHHHH')
+      dates.push({
+        title,
+        description,
+        start: stringifyDate(time.start, day),
+        end: stringifyDate(time.end, day),
+      });
+  }});
+
+  console.log('dates: ', dates);
+  return dates;
+};
 
 /*------------------------------------------------------------------------*/
 /* ------------------------------ Component ----------------------------- */
@@ -281,17 +355,15 @@ const DisplaySchedules: React.FC<{}> = () => {
   /*----------------------------------------*/
   let calendarEvents: any[] = [];
   if (schedules && schedules.length > 0) {
-    calendarEvents = schedules[0].courses.map((course) => {
-      return {
-        title: course.id,
-        start: '2024-01-26T10:30:00',
-        end: '2024-01-26T11:30:00',
-        extendedProps: {
-          courseTitle: course.title,
-        },
-        description: course.description,
-      };
-})};
+    console.log('we are making events');
+    calendarEvents = generateDates(schedules[0].courses[0]);
+      // return {
+      //   title: course.id,
+      //   description: course.description,
+      //   start: "2024-01-23T15:00:00",
+      //   end: "2024-01-23T16:01:05",
+      // };
+  };
 
   return (
     <div className="bg-white h-full">
