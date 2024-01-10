@@ -56,7 +56,7 @@ const getXText = async (jsPath: string, page: any): Promise<string> => {
  * @param time12h time in 12 hour format
  * @returns time in 24 hour format
  */
-const convertTime12to24 = (time12h) => {
+const convertTime12to24 = (time12h: any) => {
   const time = time12h.slice(0, -2);
   const modifier = time12h.slice(-2);
 
