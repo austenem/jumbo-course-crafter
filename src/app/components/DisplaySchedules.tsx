@@ -315,6 +315,7 @@ const DisplaySchedules: React.FC<{}> = () => {
     }));
     
     required = required.filter((course) => course !== "Internal server error");
+    console.log('required:', required);
     
     // Get chooseAny courses from database
     let chooseAny = await Promise.all(chooseAnyCourseNums.split(', ').map(async (courseNum) => {
@@ -326,6 +327,7 @@ const DisplaySchedules: React.FC<{}> = () => {
     }))
     
     chooseAny = chooseAny.filter((course) => course.message !== "Internal server error");
+    console.log('chooseAny:', chooseAny);
 
     // Generate schedules
     const schedules = generateSchedules({
