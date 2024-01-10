@@ -20,6 +20,6 @@ export async function GET (req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (err) {
-    return NextResponse.json({ message: 'Internal server error' });
+    return NextResponse.json({ message: 'Internal num server error' });
   }
 }
