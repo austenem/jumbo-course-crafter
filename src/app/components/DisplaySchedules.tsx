@@ -68,6 +68,8 @@ type State = {
   }[],
   // Whether to show the loading spinner
   showLoadingSpinner?: boolean,
+  // Error message, if any
+  errorMessage?: string,
 };
 
 /* ------------- Actions ------------ */
@@ -80,6 +82,8 @@ enum ActionType {
   GenerateEvents = 'GenerateEvents',
   // Toggle whether to show the loading spinner
   ToggleLoadingSpinner = 'ToggleLoadingSpinner',
+  // Show error message
+  ShowErrorMessage = 'ShowErrorMessage',
 }
 
 // Action definitions
@@ -105,6 +109,12 @@ type Action = (
     // Action type
     type: ActionType.ToggleLoadingSpinner,
   }
+  | {
+    // Action type
+    type: ActionType.ShowErrorMessage,
+    // Error message to show
+    errorMessage: string,
+  }
 );
 
 /**
@@ -129,12 +139,19 @@ const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         schedules: action.newSchedules,
+        errorMessage: undefined,
       };
     }
     case ActionType.ToggleLoadingSpinner: {
       return {
         ...state,
         showLoadingSpinner: !state.showLoadingSpinner,
+      };
+    }
+    case ActionType.ShowErrorMessage: {
+      return {
+        ...state,
+        errorMessage: action.errorMessage,
       };
     }
     default: {
@@ -271,6 +288,7 @@ const DisplaySchedules: React.FC<{}> = () => {
     },
     schedules,
     showLoadingSpinner,
+    errorMessage,
   } = state;
 
   /*------------------------------------------------------------------------*/
@@ -289,7 +307,7 @@ const DisplaySchedules: React.FC<{}> = () => {
       type: ActionType.ToggleLoadingSpinner,
     });
 
-    // Get courses from database
+    // Get required courses from database
     let required = await Promise.all(requiredCourseNums.split(', ').map(async (courseNum) => {
       console.log(`Here it is: ${courseNum}`);
       const response = await fetch(`/api/courses/num?classNo=${courseNum}`, {
@@ -302,6 +320,7 @@ const DisplaySchedules: React.FC<{}> = () => {
     required = required.filter((course) => course !== "Internal server error");
     console.log('required: ', required);
     
+    // Get chooseAny courses from database
     let chooseAny = await Promise.all(chooseAnyCourseNums.split(', ').map(async (courseNum) => {
       console.log(`Here it is: ${courseNum}`);
       const response = await fetch(`/api/courses/num?classNo=${courseNum}`, {
@@ -341,15 +360,20 @@ const DisplaySchedules: React.FC<{}> = () => {
             calendarEvents,
           });
       });
-    } else {
-      console.log('Error generating schedules: ', newSchedules);
-    }
 
-    // Update schedules
-    dispatch({
-      type: ActionType.GenerateEvents,
-      newSchedules,
-    });
+      // Update schedules
+      dispatch({
+        type: ActionType.GenerateEvents,
+        newSchedules,
+      });
+    } else {
+      // Show error message
+      console.log('error: ', schedules);
+      dispatch({
+        type: ActionType.ShowErrorMessage,
+        errorMessage: schedules,
+      });
+    }
 
     // Toggle loading spinner
     dispatch({
@@ -415,7 +439,7 @@ const DisplaySchedules: React.FC<{}> = () => {
             </label>
             <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500" 
                    type="number"
-                   placeholder="12"
+                   placeholder="18"
                    value={String(maxCredits)}
                    onChange={(evt) => dispatch({
                     type: ActionType.UpdateFormInfo,
@@ -432,7 +456,7 @@ const DisplaySchedules: React.FC<{}> = () => {
             </label>
             <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
                    type="text"
-                   placeholder="23608, 23608"
+                   placeholder="23608, 23604, 23991"
                    value={requiredCourseNums}
                    onChange={(evt) => dispatch({
                     type: ActionType.UpdateFormInfo,
@@ -447,7 +471,7 @@ const DisplaySchedules: React.FC<{}> = () => {
             </label>
             <input className="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
                    type="text"
-                   placeholder="23608, 23608"
+                   placeholder="25376, 20796"
                    value={chooseAnyCourseNums}
                    onChange={(evt) => dispatch({
                     type: ActionType.UpdateFormInfo,
@@ -484,7 +508,7 @@ const DisplaySchedules: React.FC<{}> = () => {
       {schedules
         ? schedules.map((schedule, i) => 
         (<div 
-          key={schedule.calendarEvents[0].title}
+          key={schedule.calendarEvents[0].description}
           className='w-full px-6'
         >
             <br />
@@ -512,6 +536,11 @@ const DisplaySchedules: React.FC<{}> = () => {
             />
         </div>))
         : null}
+        {errorMessage
+          ? (<div className='w-full px-6'>
+              <b>{errorMessage}</b>
+            </div>)
+          : null}
     </div>
   );
 };
