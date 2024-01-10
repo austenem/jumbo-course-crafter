@@ -159,8 +159,6 @@ const stringifyDate = (time: number, day: keyof typeof WeekDays): string => {
   const hours = Math.floor(positiveInteger / 100);
   const minutes = Math.floor(positiveInteger % 100);
 
-  console.log(`hours: ${hours}, minutes: ${minutes}`);
-
   // Format the result with leading zeros
   const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00`;
 
@@ -189,7 +187,6 @@ const generateDates = (course: Course): CalendarDate[] => {
 
   // Get main group
   if (!mainGroup.selectedSection || !mainGroup.selectedSection.days || !mainGroup.selectedSection.time) {
-    console.log('uh oh')
     return dates;
   }
 
@@ -198,10 +195,8 @@ const generateDates = (course: Course): CalendarDate[] => {
     time,
   } = mainGroup.selectedSection;
 
-  console.log('days: ', days);
   days.forEach((day) => {
     if (day === "Monday" || day === "Tuesday" || day === "Wednesday" || day === "Thursday" || day === "Friday" || day === "Saturday" || day === "Sunday") {
-      console.log('AAAAHHHHHHHHH')
       dates.push({
         title,
         description,
@@ -210,7 +205,29 @@ const generateDates = (course: Course): CalendarDate[] => {
       });
   }});
 
-  console.log('dates: ', dates);
+  // Get secondary groups
+  secondaryGroups.forEach((group) => {
+    if (!group.selectedSection || !group.selectedSection.days || !group.selectedSection.time) {
+      return dates;
+    }
+
+    const {
+      days,
+      time,
+    } = group.selectedSection;
+
+    days.forEach((day) => {
+      if (day === "Monday" || day === "Tuesday" || day === "Wednesday" || day === "Thursday" || day === "Friday" || day === "Saturday" || day === "Sunday") {
+        dates.push({
+          title,
+          description,
+          start: stringifyDate(time.start, day),
+          end: stringifyDate(time.end, day),
+        });
+    }});
+  });
+
+
   return dates;
 };
 
@@ -353,16 +370,13 @@ const DisplaySchedules: React.FC<{}> = () => {
   /*----------------------------------------*/
   /* --------------- Main UI -------------- */
   /*----------------------------------------*/
+
   let calendarEvents: any[] = [];
+
   if (schedules && schedules.length > 0) {
-    console.log('we are making events');
-    calendarEvents = generateDates(schedules[0].courses[0]);
-      // return {
-      //   title: course.id,
-      //   description: course.description,
-      //   start: "2024-01-23T15:00:00",
-      //   end: "2024-01-23T16:01:05",
-      // };
+    schedules[0].courses.forEach((course) => {
+      calendarEvents = calendarEvents.concat(generateDates(course));
+    });
   };
 
   return (
@@ -459,31 +473,34 @@ const DisplaySchedules: React.FC<{}> = () => {
       </form>
       {/* Add Modal */}
       {modal}
-      <div className='w-full px-4'>
-        {/* <div> */}
-          <FullCalendar
-            views={{
-              default: {
-                type: "timeGridWeek",
-                duration: { days: 7 },
-              },
-            }}
-            validRange={{
-              start: '2024-01-21',
-              end: '2024-01-28'
-            }}
-            slotMinTime="07:00:00"
-            slotMaxTime="22:00:00"
-            allDaySlot={false}
-            headerToolbar={false}
-            plugins={[timeGridPlugin]}
-            events={calendarEvents}
-            eventOverlap={false}
-            displayEventTime={true}
-            slotDuration="00:30:00"
-          />
-        {/* </div> */}
-      </div>
+      {schedules
+        ? (<div className='w-full px-4'>
+            <b>Schedule 1: ({schedules[0].creditTotal} credits)</b>
+            <br />
+            <FullCalendar
+              views={{
+                default: {
+                  type: "timeGridWeek",
+                  duration: { days: 7 },
+                },
+              }}
+              validRange={{
+                start: '2024-01-21',
+                end: '2024-01-28'
+              }}
+              slotMinTime="07:00:00"
+              slotMaxTime="22:00:00"
+              allDaySlot={false}
+              headerToolbar={false}
+              plugins={[timeGridPlugin]}
+              events={calendarEvents}
+              eventOverlap={false}
+              displayEventTime={true}
+              slotDuration="00:30:00"
+            />
+          {/* </div> */}
+        </div>)
+        : null}
     </div>
   );
 };
