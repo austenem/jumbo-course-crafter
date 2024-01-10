@@ -3,6 +3,8 @@ import { NextResponse, NextRequest } from 'next/server';
 // Import clientPromise
 import clientPromise from '@/backend/lib/mongodb';
 
+export const dynamic = "force-dynamic"
+
 export async function GET (req: NextRequest) {
   try {
     // get classNo from URL
