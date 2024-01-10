@@ -9,13 +9,15 @@ import React, { useReducer, useEffect } from 'react';
 // Import types
 import Cart from '@/backend/types/Cart';
 import Schedule from '@/backend/types/Schedule';
+import Course from '@/backend/types/Course';
 
 // Import helpers
 import { generateSchedules } from '../helpers/generateSchedules';
 
 // Import components
 import { ThreeDots } from 'react-loader-spinner'
-import Course from '@/backend/types/Course';
+import FullCalendar from '@fullcalendar/react'
+import timeGridPlugin from '@fullcalendar/timegrid'
 
 /*------------------------------------------------------------------------*/
 /* -------------------------------- Types ------------------------------- */
@@ -158,6 +160,7 @@ const DisplaySchedules: React.FC<{}> = () => {
       minCredits: 12,
       maxCredits: 18,
     },
+    schedules: [],
   };
 
   // Initialize state
@@ -187,41 +190,36 @@ const DisplaySchedules: React.FC<{}> = () => {
   const handleGeneration = async (e: any) => {
     e.preventDefault();
     console.log('Generating schedules...');
-    // Toggle loading spinner
-    // dispatch({
-    //   type: ActionType.ToggleLoadingSpinner,
-    // });
+    //  Toggle loading spinner
+    dispatch({
+      type: ActionType.ToggleLoadingSpinner,
+    });
 
     // Get courses from database
-
-    // console.log('woah')
-    // const response = await fetch(`/api/courses/num?classNo=23608`, {
-    //   method: "GET",
-    // });
-    // console.log('RESPONSE HERE:', response.body);
-    // console.log('RESPONSE HERE:', (await response.json()));
-
-    const required = await Promise.all(requiredCourseNums.split(', ').map(async (courseNum) => {
+    let required = await Promise.all(requiredCourseNums.split(', ').map(async (courseNum) => {
       console.log(`Here it is: ${courseNum}`);
       const response = await fetch(`/api/courses/num?classNo=${courseNum}`, {
         method: "GET",
       });
       const responseJson = await response.json();
-      console.log('RESPONSE HERE:', responseJson);
       return responseJson;
     }));
-
+    
+    required = required.filter((course) => course !== "Internal server error");
     console.log('required: ', required);
-
-    const chooseAny = await Promise.all(chooseAnyCourseNums.split(', ').map(async (courseNum) => {
+    
+    let chooseAny = await Promise.all(chooseAnyCourseNums.split(', ').map(async (courseNum) => {
       console.log(`Here it is: ${courseNum}`);
       const response = await fetch(`/api/courses/num?classNo=${courseNum}`, {
         method: "GET",
       });
       const responseJson = await response.json();
-      console.log('RESPONSE HERE:', responseJson);
       return responseJson;
-    }));
+    }))
+    
+    chooseAny = chooseAny.filter((course) => course.message !== "Internal server error");
+    console.log('chooseAny: ', chooseAny);
+
 
     // Generate schedules
     const newSchedules = generateSchedules({
@@ -236,16 +234,20 @@ const DisplaySchedules: React.FC<{}> = () => {
 
     console.log('newSchedules: ', newSchedules);
 
-    // // Update schedules
-    // dispatch({
-    //   type: ActionType.GenerateSchedules,
-    //   newSchedules,
-    // });
+    // Update schedules
+    if (typeof newSchedules !== 'string') {
+      dispatch({
+        type: ActionType.GenerateSchedules,
+        newSchedules,
+      });
+    } else {
+      console.log('Error generating schedules: ', newSchedules);
+    }
 
-    // // Toggle loading spinner
-    // dispatch({
-    //   type: ActionType.ToggleLoadingSpinner,
-    // });
+    // Toggle loading spinner
+    dispatch({
+      type: ActionType.ToggleLoadingSpinner,
+    });
   };
 
   /*------------------------------------------------------------------------*/
@@ -268,7 +270,7 @@ const DisplaySchedules: React.FC<{}> = () => {
         key="unique-modal-key"
         height="80"
         width="80"
-        color="purple"
+        color="blue"
         ariaLabel="three-dots-loading"
       />
     );
@@ -277,19 +279,24 @@ const DisplaySchedules: React.FC<{}> = () => {
   /*----------------------------------------*/
   /* --------------- Main UI -------------- */
   /*----------------------------------------*/
-  console.log(minCredits)
-  console.log(maxCredits)
-  console.log(requiredCourseNums)
-  console.log(chooseAnyCourseNums)
-  console.log(chooseOneCourseNums)
-  return (
-    <div className="bg-white h-screen">
-      {/* Add Modal */}
-      {modal}
+  let calendarEvents: any[] = [];
+  if (schedules && schedules.length > 0) {
+    calendarEvents = schedules[0].courses.map((course) => {
+      return {
+        title: course.id,
+        start: '2024-01-26T10:30:00',
+        end: '2024-01-26T11:30:00',
+        extendedProps: {
+          courseTitle: course.title,
+        },
+        description: course.description,
+      };
+})};
 
-      {/* Add Body */}
+  return (
+    <div className="bg-white h-full">
       <form 
-        className="w-full h-full px-4 py-4"
+        className="w-full px-4 py-4"
         onSubmit={handleGeneration}
       >
         <div className="flex flex-wrap -mx-3 mb-2">
@@ -378,6 +385,33 @@ const DisplaySchedules: React.FC<{}> = () => {
           Generate
         </button>
       </form>
+      {/* Add Modal */}
+      {modal}
+      <div className='w-full px-4'>
+        {/* <div> */}
+          <FullCalendar
+            views={{
+              default: {
+                type: "timeGridWeek",
+                duration: { days: 7 },
+              },
+            }}
+            validRange={{
+              start: '2024-01-21',
+              end: '2024-01-28'
+            }}
+            slotMinTime="07:00:00"
+            slotMaxTime="22:00:00"
+            allDaySlot={false}
+            headerToolbar={false}
+            plugins={[timeGridPlugin]}
+            events={calendarEvents}
+            eventOverlap={false}
+            displayEventTime={true}
+            slotDuration="00:30:00"
+          />
+        {/* </div> */}
+      </div>
     </div>
   );
 };
