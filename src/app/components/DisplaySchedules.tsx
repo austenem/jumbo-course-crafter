@@ -194,7 +194,6 @@ const stringifyDate = (time: number, day: keyof typeof WeekDays): string => {
  * @returns date ID string to use in calendar
  */
 const generateDates = (course: Course): CalendarDate[] => {
-  console.log('course title: ', course.title);
   // destructuring course
   const { 
     title,
@@ -301,7 +300,6 @@ const DisplaySchedules: React.FC<{}> = () => {
    */
   const handleGeneration = async (e: any) => {
     e.preventDefault();
-    console.log('Generating schedules...');
     //  Toggle loading spinner
     dispatch({
       type: ActionType.ToggleLoadingSpinner,
@@ -309,7 +307,6 @@ const DisplaySchedules: React.FC<{}> = () => {
 
     // Get required courses from database
     let required = await Promise.all(requiredCourseNums.split(', ').map(async (courseNum) => {
-      console.log(`Here it is: ${courseNum}`);
       const response = await fetch(`/api/courses/num?classNo=${courseNum}`, {
         method: "GET",
       });
@@ -318,11 +315,9 @@ const DisplaySchedules: React.FC<{}> = () => {
     }));
     
     required = required.filter((course) => course !== "Internal server error");
-    console.log('required: ', required);
     
     // Get chooseAny courses from database
     let chooseAny = await Promise.all(chooseAnyCourseNums.split(', ').map(async (courseNum) => {
-      console.log(`Here it is: ${courseNum}`);
       const response = await fetch(`/api/courses/num?classNo=${courseNum}`, {
         method: "GET",
       });
@@ -331,8 +326,6 @@ const DisplaySchedules: React.FC<{}> = () => {
     }))
     
     chooseAny = chooseAny.filter((course) => course.message !== "Internal server error");
-    console.log('chooseAny: ', chooseAny);
-
 
     // Generate schedules
     const schedules = generateSchedules({
@@ -345,7 +338,6 @@ const DisplaySchedules: React.FC<{}> = () => {
       },
     });
 
-    console.log('schedules: ', schedules);
     const newSchedules: any[] = [];
 
     if (typeof schedules !== 'string') {
@@ -368,7 +360,7 @@ const DisplaySchedules: React.FC<{}> = () => {
       });
     } else {
       // Show error message
-      console.log('error: ', schedules);
+      console.log('Error: ', schedules);
       dispatch({
         type: ActionType.ShowErrorMessage,
         errorMessage: schedules,
