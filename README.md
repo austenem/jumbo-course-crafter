@@ -19,6 +19,13 @@ npm install
 
 Then add a .env file to the root directory with a MONGODB_URI variable.
 
+In order to retrieve updated course data from the Tufts SIS and store it in
+your MongoDB collection, run:
+
+```bash
+npm run get-courses
+```
+
 Finally, run the development server:
 
 ```bash

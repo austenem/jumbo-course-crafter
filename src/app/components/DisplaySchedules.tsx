@@ -503,7 +503,7 @@ const DisplaySchedules: React.FC<{}> = () => {
         ? schedules.map((schedule, i) => 
         (<div 
           key={schedule.calendarEvents[0].description}
-          className='w-full px-6'
+          className='w-full px-6 bg-gray-600'
         >
             <br />
             <b>Schedule {i + 1}: ({schedule.creditTotal} credits)</b>
